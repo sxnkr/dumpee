@@ -1,24 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class DropDevice extends StatefulWidget {
-  const DropDevice({super.key});
+  final String val;
+  DropDevice({super.key, required this.val});
 
   @override
   State<DropDevice> createState() => _DropDeviceState();
 }
 
 class _DropDeviceState extends State<DropDevice> {
-  @override
-  var x;
 
+  var loading = true;
+  var dateDiff=0;
+  var device;
+
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  var statusIndex;
+  @override
   void initState() {
     // TODO: implement initState
     super.initState();
     DateTime date1 = DateTime.parse("2023-05-08");
     DateTime date2 = DateTime.now();
 
-    x = daysBetween(date1, date2);
-    print(x);
+    dateDiff = daysBetween(date1, date2);
+    print(dateDiff);
+    device = widget.val;
+    FirebaseFirestore.instance
+        .collection('devices')
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        if (doc['val'] == device){
+          statusIndex = doc['status'];
+        }
+      });
+      setState(() {
+        loading=false;
+      });
+    });
   }
 
   // Collection, Sorting and Segregation, Dismantling and Shredding, Seperation and Recovery, Refining, Disposal of Residual Waste
@@ -31,7 +55,6 @@ class _DropDeviceState extends State<DropDevice> {
     'Refining',
     'Disposal of Residual Waste'
   ];
-  var statusIndex = 0;
   @override
   Widget build(BuildContext context) {
     var pad = (MediaQuery.of(context).size.width / 8);
@@ -41,7 +64,12 @@ class _DropDeviceState extends State<DropDevice> {
           title: const Text('DumpE'),
           centerTitle: true,
         ),
-        body: SingleChildScrollView(
+        body: loading == true ? Center(
+          child: LoadingAnimationWidget.staggeredDotsWave(
+            color: Colors.black,
+            size: 50,
+          ),
+        ):SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.fromLTRB(pad, 10, pad, 10),
             child: Column(
@@ -64,13 +92,15 @@ class _DropDeviceState extends State<DropDevice> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                 ),
                 Text(
-                  'Next shipment in $x days',
+                  'Next shipment in $dateDiff days',
                   style: TextStyle(
                       color: const Color.fromARGB(255, 179, 177, 177)),
                 ),
+                SizedBox(height: 20,),
                 Column(
                   children: trackWidgets(),
                 ),
+                SizedBox(height: 20,)
               ],
             ),
           ),

@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dumpee/drop_device.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class DropOff extends StatefulWidget {
   const DropOff({super.key});
@@ -9,12 +11,30 @@ class DropOff extends StatefulWidget {
 }
 
 class _DropOffState extends State<DropOff> {
-  static const List<String> list = <String>[
-    '',
-    '1AXE3',
-    'ASF3S',
-  ];
-  String dropdownValue = list.first;
+
+  var loading = true;
+  var nearbyList = [''];
+  var refIDs = ['',];
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  CollectionReference devices = FirebaseFirestore.instance.collection('devices');
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    FirebaseFirestore.instance
+        .collection('devices')
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        refIDs.add(doc.reference.id);
+        nearbyList.add(doc["val"]);
+      });
+      setState(() {
+        loading=false;
+      });
+    });
+  }
+
+  String dropdownValue = '';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,7 +43,13 @@ class _DropOffState extends State<DropOff> {
         title: const Text('DumpE'),
         centerTitle: true,
       ),
-      body: Container(
+      body: loading == true ? Center(
+        child: LoadingAnimationWidget.staggeredDotsWave(
+          color: Colors.black,
+          size: 50,
+        ),
+      ):
+      Container(
         alignment: Alignment.center,
         decoration: BoxDecoration(
           image: DecorationImage(
@@ -61,14 +87,23 @@ class _DropOffState extends State<DropOff> {
                     setState(() {
                       dropdownValue = value!;
                     });
+                    var i = nearbyList.indexOf(dropdownValue);
+
+                    devices
+                        .doc(refIDs[i])
+                        .update({'open': 1})
+                        .then((value) => print("Updated"))
+                        .catchError((error) => print("Failed to update user: $error"));
+
+
                     if (dropdownValue != '')
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const DropDevice()),
+                            builder: (context) => DropDevice(val: dropdownValue)),
                       );
                   },
-                  items: list.map<DropdownMenuItem<String>>((String value) {
+                  items: nearbyList.map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(value),
