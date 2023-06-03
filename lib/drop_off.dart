@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dumpee/ObjectDet.dart';
 import 'package:dumpee/drop_device.dart';
+import 'package:dumpee/main.dart';
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -59,7 +61,7 @@ class _DropOffState extends State<DropOff> {
         ),
         child: Center(
           child: Container(
-            height: 90,
+            height: 190,
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
                 color: const Color.fromARGB(255, 199, 179, 255),
@@ -110,6 +112,8 @@ class _DropOffState extends State<DropOff> {
                     );
                   }).toList(),
                 ),
+                SizedBox(height: 25,),
+                CustomCard('Object Detection', ObjectDetectorView()),
               ],
             ),
           ),
